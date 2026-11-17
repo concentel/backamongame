@@ -1,0 +1,63 @@
+# ---- Dependencies (restored by `npm install` / `npm ci`) -----------------------------------------
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ---- Next.js build output and caches -------------------------------------------------------------
+/.next/
+/out/
+/build
+/dist
+next-env.d.ts
+.next-profiles/
+.turbo/
+
+# ---- TypeScript / lint caches --------------------------------------------------------------------
+*.tsbuildinfo
+.eslintcache
+.prettiercache
+
+# ---- Tests ---------------------------------------------------------------------------------------
+/coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# ---- Local data (JSON file store used when no DATABASE_URL is set) -------------------------------
+.data/
+.data-test/
+
+# ---- Secrets and environment files (only the template is committed) -----------------------------
+.env*
+!.env.example
+*.pem
+*.key
+
+# ---- Deployment ----------------------------------------------------------------------------------
+.vercel
+
+# ---- Logs ----------------------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ---- Editors, OS and local tool settings ---------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.claude/settings.local.json
+
+# ---- Original artwork (large); optimised WebP copies are committed instead -----------------------
+public/images/play/*.png
+/public/images/Backgammon Nights in the City.png

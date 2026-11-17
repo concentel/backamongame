@@ -1,0 +1,51 @@
+{
+  "name": "backgammon-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:pg": "BG_STORE=pglite vitest run --no-file-parallelism",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip",
+    "e2e": "playwright test",
+    "test:postgres": "BG_STORE=postgres vitest run --no-file-parallelism"
+  },
+  "dependencies": {
+    "@supabase/realtime-js": "2.117.2",
+    "@tanstack/react-query": "5.104.0",
+    "@zolaha/react-noto-animated-emoji": "2.2.3",
+    "chess.js": "1.4.0",
+    "next": "16.4.6",
+    "postgres": "3.4.9",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "three": "0.186.1",
+    "wagmi": "3.7.7",
+    "viem": "2.56.9"
+    
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@playwright/test": "1.63.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "0.186.0",
+    "eslint": "10.10.0",
+    "eslint-config-next": "16.4.6",
+    "knip": "6.39.0",
+    "prettier": "3.9.9",
+    "typescript": "^5",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "ws@^8": "8.22.0",
+    "uuid@<11.1.1": "11.1.1"
+  }
+}

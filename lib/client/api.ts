@@ -1,0 +1,93 @@
+export interface ApiErrorBody {
+  code: string;
+  message: string;
+  referenceId?: string;
+  currentVersion?: number;
+  /** ALREADY_IN_GAME: the game the player is in. */
+  current?: CurrentGame;
+}
+
+export interface CurrentGame {
+  matchId: string;
+  mode: "quick" | "private" | "local" | "bot";
+  status: string;
+  opponent: string | null;
+  host: boolean;
+}
+
+/** Fired for ALREADY_IN_GAME; the app-wide GameGuard explains it and offers a way out. */
+export const ALREADY_IN_GAME_EVENT = "bg:already-in-game";
+
+/** Errors already shown to the player app-wide, so callers need not show them again. */
+export const isHandled = (e: unknown) => e instanceof ClientApiError && e.code === "ALREADY_IN_GAME";
+
+export class ClientApiError extends Error {
+  constructor(
+    public status: number,
+    public body: ApiErrorBody,
+  ) {
+    super(body.message);
+  }
+  get code() {
+    return this.body.code;
+  }
+}
+
+/** JSON fetch with the contract's error envelope. Network failures surface as code NETWORK (outcome unknown). */
+/** A fresh random seed from this device, mixed into the dice of a match it starts or joins (fair dice). */
+export function deviceSeed() {
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+const STARTS_GAME = /^\/api\/((tables|matches)(\/[0-9a-z]+\/(join|rematch))?|friends\/\d+\/invite|invites\/\d+)$/;
+
+export async function api<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
+  // Starting or joining a match: this device contributes its seed to the dice.
+  if (init?.method === "POST" && STARTS_GAME.test(path) && typeof window !== "undefined") {
+    init = { ...init, body: { ...((init.body as object) ?? {}), clientSeed: deviceSeed() } };
+  }
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method: init?.method ?? "GET",
+      headers: init?.body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
+      cache: "no-store",
+    });
+  } catch {
+    throw new ClientApiError(0, { code: "NETWORK", message: "Connection problem. Retrying is safe." });
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const body: ApiErrorBody = data.error ?? { code: "SERVICE_UNAVAILABLE", message: "Request failed" };
+    if (body.code === "ALREADY_IN_GAME" && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(ALREADY_IN_GAME_EVENT, { detail: body.current }));
+    }
+    throw new ClientApiError(res.status, body);
+  }
+  return data as T;
+}
+
+export const newActionId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+
+/**
+ * Send an action with one stable actionId; on a network failure retry with the same ID, which the
+ * server treats as the same request (it cannot be applied twice).
+ */
+export async function sendIdempotent<T>(path: string, body: Record<string, unknown>, retries = 2): Promise<T> {
+  const payload = { actionId: newActionId(), ...body };
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await api<T>(path, { method: "POST", body: payload });
+    } catch (e) {
+      if (e instanceof ClientApiError && e.code === "NETWORK" && attempt < retries) {
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
